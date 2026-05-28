@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioLoop Africa Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; font-family: system-ui, sans-serif; }
+        .stat-card { border: none; border-radius: 12px; transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-3px); }
+        .card-header { background: #fff; border-bottom: 1px solid #eee; font-weight: 600; }
+        .footer { margin-top: 3rem; padding: 1.5rem 0; border-top: 1px solid #dee2e6; text-align: center; color: #6c757d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-success shadow-sm mb-4">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1"> BioLoop Africa</span>
+            <span class="navbar-text text-white-50 d-none d-sm-inline">Turning Waste into Digital Value</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm p-3 text-center"><h6 class="text-muted mb-1">Total Users</h6><h2 class="fw-bold text-success mb-0">{{ stats.total_users }}</h2></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm p-3 text-center"><h6 class="text-muted mb-1">Waste Collected</h6><h2 class="fw-bold text-primary mb-0">{{ "%.1f"|format(stats.total_waste_kg) }} kg</h2></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm p-3 text-center"><h6 class="text-muted mb-1">CO₂ Saved</h6><h2 class="fw-bold text-info mb-0">{{ "%.1f"|format(stats.total_co2_saved) }} kg</h2></div></div>
+            <div class="col-md-3 col-6"><div class="card stat-card shadow-sm p-3 text-center"><h6 class="text-muted mb-1">Energy Generated</h6><h2 class="fw-bold text-warning mb-0">{{ "%.1f"|format(stats.total_energy_generated) }} kWh</h2></div></div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">📈 Waste Distribution</div>
+                    <div class="card-body d-flex align-items-center justify-content-center" style="height: 300px;">
+                        <canvas id="wasteChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card shadow-sm h-100">
+                    <div class="card-header">🏆 Top Eco-Warriors</div>
+                    <div class="card-body p-0">
+                        <ul class="list-group list-group-flush">
+                            {% for user in users[:5] %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div><strong class="d-block">{{ user.name }}</strong><small class="text-muted">{{ user.location }}</small></div>
+                                <span class="badge bg-success rounded-pill fs-6">{{ user.eco_points }} pts</span>
+                            </li>
+                            {% else %}
+                            <li class="list-group-item text-center text-muted py-4">No users yet</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header"> Recent Activity</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light"><tr><th>User</th><th>Type</th><th>Weight</th><th>Points</th><th>Date</th></tr></thead>
+                    <tbody>
+                        {% for rec in recent_records %}
+                        <tr>
+                            {% set uname = "Unknown" %}
+                            {% for u in users %}{% if u.user_id == rec.user_id %}{% set uname = u.name %}{% endif %}{% endfor %}
+                            <td>{{ uname }}</td>
+                            <td><span class="badge bg-secondary">{{ rec.waste_type_name }}</span></td>
+                            <td>{{ rec.weight_kg }} kg</td>
+                            <td class="text-success fw-bold">+{{ rec.points_earned }}</td>
+                            <td class="text-muted small">{{ rec.timestamp }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-3">No activity yet</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- AI PREDICTIONS SECTION -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card stat-card shadow-sm p-3 text-center border-primary">
+                    <h6 class="text-muted mb-1">🔮 Next Month Forecast</h6>
+                    <h2 class="fw-bold text-primary mb-0">{{ forecast }} kg</h2>
+                    <small class="text-success">Estimated Growth</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card shadow-sm p-3 text-center border-warning">
+                    <h6 class="text-muted mb-1">💰 Est. Revenue Value</h6>
+                    <h2 class="fw-bold text-warning mb-0">${{ revenue }}</h2>
+                    <small class="text-muted">Based on carbon credits & recycling</small>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card stat-card shadow-sm p-3 text-center border-success">
+                    <h6 class="text-muted mb-1"> Community Health</h6>
+                    <h2 class="fw-bold text-success mb-0">{{ score }}/100</h2>
+                    <small class="text-muted">System Vitality Score</small>
+                </div>
+            </div>
+        </div>
+        <div class="footer"><small>Built by <strong>Christopher Afwande</strong> | BioLoop Africa &copy; 2026</small></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('wasteChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ labels|tojson }},
+                datasets: [{ data: {{ values|tojson }}, backgroundColor: ['#198754', '#0d6efd', '#ffc107', '#dc3545', '#6f42c1'], borderWidth: 0 }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
+</body>
+</html>
