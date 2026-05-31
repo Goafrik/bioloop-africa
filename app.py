@@ -57,6 +57,10 @@ def dashboard():
                            score=health_score)
 
 if __name__ == "__main__":
-    print("\n🌍 BioLoop Africa Dashboard (AI-Enabled) starting...")
-    print("🌐 Open in browser: http://127.0.0.1:5000")
-    app.run(debug=True, port=5000)
+    import os
+    # Render gives us a PORT environment variable. We use it.
+    port = int(os.environ.get("PORT", 5000))
+    print(f"\n🌍 BioLoop Africa starting on port {port}...")
+    # host="0.0.0.0" allows Render to detect the app
+    # debug=False is required for production/cloud
+    app.run(host="0.0.0.0", port=port, debug=False)
